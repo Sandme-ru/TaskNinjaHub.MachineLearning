@@ -1,4 +1,5 @@
 import tensorflow as tf
+import json
 from tensorflow.keras import layers, models
 
 def create_model(input_shape):
@@ -26,3 +27,17 @@ def train_model(X_train, y_train, epochs=10):
 
 def save_model(model, filepath):
     model.save(filepath)
+
+def predict_probability(jsonData, modelFilePath):
+    data = json.loads(jsonData)
+    priorityId = data['PriorityId']
+    informationSystemId = data['InformationSystemId']
+    taskExecutorId = data['TaskExecutorId']
+
+    model = tf.keras.models.load_model(modelFilePath)
+    
+    # Преобразование списка в тензор
+    inputs = tf.constant([[priorityId, informationSystemId, taskExecutorId]], dtype=tf.float32)
+
+    prediction = model.predict(inputs)
+    return float(prediction[0][0])

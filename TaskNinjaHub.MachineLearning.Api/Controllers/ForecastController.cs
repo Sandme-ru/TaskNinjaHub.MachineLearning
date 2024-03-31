@@ -20,4 +20,18 @@ public class ForecastController(Core core) : ControllerBase
         core.TrainAndSaveModel(tasks);
         return Ok();
     }
+
+    [HttpPost("PredictProbability")]
+    public IActionResult PredictProbability([FromBody] TaskInputData inputData)
+    {
+        var probability = core.PredictProbability(inputData.PriorityId, inputData.InformationSystemId, inputData.TaskExecutorId, "trained_model.keras");
+        return Ok(probability);
+    }
+}
+
+public class TaskInputData
+{
+    public double PriorityId { get; set; }
+    public double InformationSystemId { get; set; }
+    public double TaskExecutorId { get; set; }
 }
