@@ -2,6 +2,7 @@
 using Python.Runtime;
 using TaskNinjaHub.MachineLearning.Application.Entities.Tasks.Domain;
 using TaskNinjaHub.MachineLearning.Application.Entities.TaskStatuses.Enum;
+using TaskNinjaHub.MachineLearning.Application.Utilities.OperationResults;
 
 namespace TaskNinjaHub.MachineLearning.Application;
 
@@ -13,83 +14,102 @@ public class TrainingCore
 
     private const int Epochs = 100;
 
-    public string TrainAndSaveModel(List<CatalogTask> tasks)
+    public OperationResult<string> TrainAndSaveModel(List<CatalogTask> tasks)
     {
-        PythonEngine.Initialize();
-
-        var projectDirectory = Directory.GetCurrentDirectory();
-        var codeFilePath = Path.Combine(projectDirectory, ModelPy);
-
-        if (File.Exists(codeFilePath))
+        try
         {
-            var data = tasks.Select(task => new double[] {
-                task.PriorityId ?? 0,
-                task.InformationSystemId ?? 0,
-                task.TaskExecutorId ?? 0
-            }).ToArray();
+            PythonEngine.Initialize();
 
-            var labels = tasks.Select(task => task.TaskStatusId == (int?)EnumTaskStatus.Done ? 1 : 0).ToArray();
+            var projectDirectory = Directory.GetCurrentDirectory();
+            var codeFilePath = Path.Combine(projectDirectory, ModelPy);
 
-            dynamic scope;
-            using (Py.GIL())
+            if (File.Exists(codeFilePath))
             {
-                scope = Py.CreateScope();
-                scope.Exec(File.ReadAllText(codeFilePath));
+                var data = tasks.Select(task => new double[]
+                {
+                    task.PriorityId ?? 0,
+                    task.InformationSystemId ?? 0,
+                    task.TaskExecutorId ?? 0
+                }).ToArray();
+
+                var labels = tasks.Select(task => task.TaskStatusId == (int?)EnumTaskStatus.Done ? 1 : 0).ToArray();
+
+                dynamic scope;
+                using (Py.GIL())
+                {
+                    scope = Py.CreateScope();
+                    scope.Exec(File.ReadAllText(codeFilePath));
+                }
+
+                var trainModel = scope.train_model;
+                var saveModel = scope.save_model;
+
+                using (Py.GIL())
+                {
+                    var model = trainModel(data, labels, Epochs);
+                    var modelFilePath = Path.Combine(projectDirectory, TrainedModelKeras);
+                    saveModel(model, modelFilePath);
+
+                    ShutdownPythonEngine();
+
+                    return OperationResult<string>.SuccessResult(modelFilePath); ;
+                }
             }
-
-            var trainModel = scope.train_model;
-            var saveModel = scope.save_model;
-
-            using (Py.GIL())
+            else
             {
-                var model = trainModel(data, labels, Epochs);
-                var modelFilePath = Path.Combine(projectDirectory, TrainedModelKeras);
-                saveModel(model, modelFilePath);
-
                 ShutdownPythonEngine();
 
-                return modelFilePath;
+                return OperationResult<string>.FailedResult("File model.py not found in the project directory.");
             }
         }
-        else
+        catch (Exception e)
         {
-            ShutdownPythonEngine();
-
-            return "File model.py not found in the project directory.";
+            return OperationResult<string>.FailedResult(e.Message);
         }
     }
 
-    public double PredictProbability(double priorityId, double informationSystemId, double taskExecutorId, string modelFilePath)
+    public OperationResult<double> PredictProbability(double priorityId, double informationSystemId, double taskExecutorId, string modelFilePath)
     {
-        PythonEngine.Initialize();
-
-        var projectDirectory = Directory.GetCurrentDirectory();
-            
-        var codeFilePath = Path.Combine(projectDirectory, ModelPy);
-
-        if (File.Exists(codeFilePath))
+        try
         {
-            dynamic result;
-            using (Py.GIL())
+            PythonEngine.Initialize();
+
+            var projectDirectory = Directory.GetCurrentDirectory();
+
+            var codeFilePath = Path.Combine(projectDirectory, ModelPy);
+
+            if (File.Exists(codeFilePath))
             {
-                dynamic scope = Py.CreateScope();
-                scope.Exec(File.ReadAllText(codeFilePath));
+                dynamic result;
+                using (Py.GIL())
+                {
+                    dynamic scope = Py.CreateScope();
+                    scope.Exec(File.ReadAllText(codeFilePath));
 
-                var predictFunction = scope.predict_probability;
+                    var predictFunction = scope.predict_probability;
 
-                var jsonData = JsonConvert.SerializeObject(new { PriorityId = priorityId, InformationSystemId = informationSystemId, TaskExecutorId = taskExecutorId });
-                result = (double)predictFunction(jsonData, modelFilePath).AsManagedObject(typeof(double));
+                    var jsonData = JsonConvert.SerializeObject(new
+                    {
+                        PriorityId = priorityId, InformationSystemId = informationSystemId,
+                        TaskExecutorId = taskExecutorId
+                    });
+                    result = (double)predictFunction(jsonData, modelFilePath).AsManagedObject(typeof(double));
+                }
+
+                ShutdownPythonEngine();
+
+                return OperationResult<double>.SuccessResult(result);
             }
+            else
+            {
+                ShutdownPythonEngine();
 
-            ShutdownPythonEngine();
-
-            return result;
+                return OperationResult<double>.FailedResult("File model.py not found in the project directory.");
+            }
         }
-        else
+        catch (Exception e)
         {
-            ShutdownPythonEngine();
-
-            throw new FileNotFoundException("File model.py not found in the project directory.");
+            return OperationResult<double>.FailedResult(e.Message);
         }
     }
 
