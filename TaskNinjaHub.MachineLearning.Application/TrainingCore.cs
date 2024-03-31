@@ -49,11 +49,11 @@ public class TrainingCore
                     var model = trainModel(data, labels, Epochs);
                     var modelFilePath = Path.Combine(projectDirectory, TrainedModelKeras);
                     saveModel(model, modelFilePath);
-
-                    ShutdownPythonEngine();
-
-                    return OperationResult<string>.SuccessResult(modelFilePath); ;
                 }
+
+                ShutdownPythonEngine();
+
+                return OperationResult<string>.SuccessResult();
             }
             else
             {
@@ -64,6 +64,8 @@ public class TrainingCore
         }
         catch (Exception e)
         {
+            ShutdownPythonEngine();
+
             return OperationResult<string>.FailedResult(e.Message);
         }
     }
@@ -109,6 +111,8 @@ public class TrainingCore
         }
         catch (Exception e)
         {
+            ShutdownPythonEngine();
+
             return OperationResult<double>.FailedResult(e.Message);
         }
     }
