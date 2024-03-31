@@ -1,6 +1,11 @@
+using Python.Runtime;
+using TaskNinjaHub.MachineLearning.Application;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+Runtime.PythonDLL = @"C:\Users\Zaid.Mingaliev\AppData\Local\anaconda3\envs\myenv\python312.dll";
+
+builder.Services.AddScoped<Core>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
