@@ -66,8 +66,8 @@ public class Core
 
             using (Py.GIL())
             {
-                dynamic model = trainModel(data, labels, 100);
-                string modelFilePath = Path.Combine(projectDirectory, "trained_model.keras");
+                var model = trainModel(data, labels, 100);
+                var modelFilePath = Path.Combine(projectDirectory, "trained_model.keras");
                 saveModel(model, modelFilePath);
                 return modelFilePath;
             }
@@ -75,6 +75,33 @@ public class Core
         else
         {
             return "File model.py not found in the project directory.";
+        }
+    }
+
+    public double PredictProbability(double priorityId, double informationSystemId, double taskExecutorId, string modelFilePath)
+    {
+        PythonEngine.Initialize();
+
+        var projectDirectory = Directory.GetCurrentDirectory();
+
+        var codeFilePath = Path.Combine(projectDirectory, "model.py");
+
+        if (File.Exists(codeFilePath))
+        {
+            using (Py.GIL())
+            {
+                dynamic scope = Py.CreateScope();
+                scope.Exec(File.ReadAllText(codeFilePath));
+
+                var predictFunction = scope.predict_probability;
+
+                var jsonData = JsonConvert.SerializeObject(new { PriorityId = priorityId, InformationSystemId = informationSystemId, TaskExecutorId = taskExecutorId });
+                return predictFunction(jsonData, modelFilePath);
+            }
+        }
+        else
+        {
+            throw new FileNotFoundException("File model.py not found in the project directory.");
         }
     }
 }
