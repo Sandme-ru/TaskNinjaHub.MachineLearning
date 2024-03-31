@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Python.Runtime;
 using TaskNinjaHub.MachineLearning.Application.Entities.Tasks.Domain;
+using TaskNinjaHub.MachineLearning.Application.Entities.TaskStatuses.Enum;
 
 namespace TaskNinjaHub.MachineLearning.Application;
 
@@ -48,9 +49,10 @@ public class Core
             var data = tasks.Select(task => new double[] {
                 task.PriorityId ?? 0,
                 task.InformationSystemId ?? 0,
+                task.TaskExecutorId ?? 0
             }).ToArray();
 
-            var labels = tasks.Select(task => task.TaskExecutorId.HasValue ? 1 : 0).ToArray();
+            var labels = tasks.Select(task => task.TaskStatusId == (int?)EnumTaskStatus.Done ? 1 : 0).ToArray();
 
             dynamic scope;
             using (Py.GIL())
@@ -64,7 +66,7 @@ public class Core
 
             using (Py.GIL())
             {
-                dynamic model = trainModel(data, labels, 10); // 10 эпох обучения
+                dynamic model = trainModel(data, labels, 100);
                 string modelFilePath = Path.Combine(projectDirectory, "trained_model.keras");
                 saveModel(model, modelFilePath);
                 return modelFilePath;
