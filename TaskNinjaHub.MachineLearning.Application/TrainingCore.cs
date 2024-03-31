@@ -5,44 +5,20 @@ using TaskNinjaHub.MachineLearning.Application.Entities.TaskStatuses.Enum;
 
 namespace TaskNinjaHub.MachineLearning.Application;
 
-public class Core
+public class TrainingCore
 {
-    public dynamic Main()
-    {
-        PythonEngine.Initialize();
-        
-        var projectDirectory = Directory.GetCurrentDirectory();
+    private const string ModelPy = "model.py";
 
-        var codeFilePath = Path.Combine(projectDirectory, "code.py");
+    private const string TrainedModelKeras = "trained_model.keras";
 
-        if (File.Exists(codeFilePath))
-        {
-            var code = File.ReadAllText(codeFilePath);
-
-            using (Py.GIL())
-            {
-                using dynamic scope = Py.CreateScope();
-
-                scope.Exec(code);
-
-                var mainFunction = scope.main;
-                var sum = mainFunction("firstInt, secondInt");
-                return JsonConvert.SerializeObject(sum.ToString());
-            }
-        }
-        else
-        {
-            return "File Code.py not found in the project directory.";
-        }
-    }
+    private const int Epochs = 100;
 
     public string TrainAndSaveModel(List<CatalogTask> tasks)
     {
         PythonEngine.Initialize();
 
         var projectDirectory = Directory.GetCurrentDirectory();
-
-        var codeFilePath = Path.Combine(projectDirectory, "model.py");
+        var codeFilePath = Path.Combine(projectDirectory, ModelPy);
 
         if (File.Exists(codeFilePath))
         {
@@ -66,14 +42,19 @@ public class Core
 
             using (Py.GIL())
             {
-                var model = trainModel(data, labels, 100);
-                var modelFilePath = Path.Combine(projectDirectory, "trained_model.keras");
+                var model = trainModel(data, labels, Epochs);
+                var modelFilePath = Path.Combine(projectDirectory, TrainedModelKeras);
                 saveModel(model, modelFilePath);
+
+                ShutdownPythonEngine();
+
                 return modelFilePath;
             }
         }
         else
         {
+            ShutdownPythonEngine();
+
             return "File model.py not found in the project directory.";
         }
     }
@@ -83,11 +64,12 @@ public class Core
         PythonEngine.Initialize();
 
         var projectDirectory = Directory.GetCurrentDirectory();
-
-        var codeFilePath = Path.Combine(projectDirectory, "model.py");
+            
+        var codeFilePath = Path.Combine(projectDirectory, ModelPy);
 
         if (File.Exists(codeFilePath))
         {
+            dynamic result;
             using (Py.GIL())
             {
                 dynamic scope = Py.CreateScope();
@@ -96,12 +78,27 @@ public class Core
                 var predictFunction = scope.predict_probability;
 
                 var jsonData = JsonConvert.SerializeObject(new { PriorityId = priorityId, InformationSystemId = informationSystemId, TaskExecutorId = taskExecutorId });
-                return predictFunction(jsonData, modelFilePath);
+                result = (double)predictFunction(jsonData, modelFilePath).AsManagedObject(typeof(double));
             }
+
+            ShutdownPythonEngine();
+
+            return result;
         }
         else
         {
+            ShutdownPythonEngine();
+
             throw new FileNotFoundException("File model.py not found in the project directory.");
         }
+    }
+
+    private static void ShutdownPythonEngine()
+    {
+        AppContext.SetSwitch("System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization", true);
+
+        PythonEngine.Shutdown();
+
+        AppContext.SetSwitch("System.Runtime.Serialization.EnableUnsafeBinaryFormatterSerialization", false);
     }
 }

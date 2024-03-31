@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 Runtime.PythonDLL = @"C:\Users\Zaid.Mingaliev\AppData\Local\anaconda3\envs\myenv\python312.dll";
 
-builder.Services.AddScoped<Core>();
+builder.Services.AddScoped<TrainingCore>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

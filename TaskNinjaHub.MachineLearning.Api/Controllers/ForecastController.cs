@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TaskNinjaHub.MachineLearning.Api.Models;
 using TaskNinjaHub.MachineLearning.Application;
 using TaskNinjaHub.MachineLearning.Application.Entities.Tasks.Domain;
 
@@ -6,32 +7,21 @@ namespace TaskNinjaHub.MachineLearning.Api.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class ForecastController(Core core) : ControllerBase
+public class ForecastController(TrainingCore trainingCore) : ControllerBase
 {
-    [HttpGet]
-    public IActionResult Test()
-    {
-        return Ok(core.Main());
-    }
+    private const string TrainedModelKeras = "trained_model.keras";
 
-    [HttpPost("TestTasks")]
-    public IActionResult TestTasks([FromBody] List<CatalogTask> tasks)
+    [HttpPost("Train")]
+    public IActionResult Train([FromBody] List<CatalogTask> tasks)
     {
-        core.TrainAndSaveModel(tasks);
+        trainingCore.TrainAndSaveModel(tasks);
         return Ok();
     }
 
     [HttpPost("PredictProbability")]
     public IActionResult PredictProbability([FromBody] TaskInputData inputData)
     {
-        var probability = core.PredictProbability(inputData.PriorityId, inputData.InformationSystemId, inputData.TaskExecutorId, "trained_model.keras");
+        var probability = trainingCore.PredictProbability(inputData.PriorityId, inputData.InformationSystemId, inputData.TaskExecutorId, TrainedModelKeras);
         return Ok(probability);
     }
-}
-
-public class TaskInputData
-{
-    public double PriorityId { get; set; }
-    public double InformationSystemId { get; set; }
-    public double TaskExecutorId { get; set; }
 }
