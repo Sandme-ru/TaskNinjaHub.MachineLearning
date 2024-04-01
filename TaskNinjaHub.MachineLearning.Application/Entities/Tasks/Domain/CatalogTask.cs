@@ -3,6 +3,7 @@ using TaskNinjaHub.MachineLearning.Application.Entities.Authors.Domain;
 using TaskNinjaHub.MachineLearning.Application.Entities.InformationSystems.Domain;
 using TaskNinjaHub.MachineLearning.Application.Entities.Priorities.Domain;
 using TaskNinjaHub.MachineLearning.Application.Entities.TaskStatuses.Domain;
+using TaskNinjaHub.MachineLearning.Application.Entities.TaskTypes.Domain;
 using TaskNinjaHub.MachineLearning.Application.Interfaces.Haves;
 using File = TaskNinjaHub.MachineLearning.Application.Entities.Files.Domain.File;
 
@@ -41,6 +42,10 @@ public class CatalogTask : BaseUserCU, IHaveId, IHaveName
     public int? OriginalTaskId { get; set; }
 
     public virtual CatalogTask? OriginalTask { get; set; }
+
+    public int? TaskTypeId { get; set; }
+
+    public virtual CatalogTaskType? TaskType { get; set; }
 
     public DateTime? DateStart { get; set; }
 
