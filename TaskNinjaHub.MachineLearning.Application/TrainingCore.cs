@@ -29,7 +29,9 @@ public class TrainingCore
                 {
                     task.PriorityId ?? 0,
                     task.InformationSystemId ?? 0,
-                    task.TaskExecutorId ?? 0
+                    task.TaskTypeId ?? 0,
+                    task.TaskExecutorId ?? 0,
+
                 }).ToArray();
 
                 var labels = tasks.Select(task => task.TaskStatusId == (int?)EnumTaskStatus.Done ? 1 : 0).ToArray();
@@ -70,7 +72,7 @@ public class TrainingCore
         }
     }
 
-    public OperationResult<double> PredictProbability(double priorityId, double informationSystemId, double taskExecutorId, string modelFilePath)
+    public OperationResult<double> PredictProbability(double priorityId, double informationSystemId, double taskTypeId, double taskExecutorId, string modelFilePath)
     {
         try
         {
@@ -92,7 +94,9 @@ public class TrainingCore
 
                     var jsonData = JsonConvert.SerializeObject(new
                     {
-                        PriorityId = priorityId, InformationSystemId = informationSystemId,
+                        PriorityId = priorityId, 
+                        InformationSystemId = informationSystemId,
+                        TaskTypeId = taskTypeId,
                         TaskExecutorId = taskExecutorId
                     });
                     result = (double)predictFunction(jsonData, modelFilePath).AsManagedObject(typeof(double));

@@ -6,6 +6,7 @@ def create_model(input_shape):
     model = models.Sequential([
         layers.Dense(64, activation='relu', input_shape=input_shape),
         layers.Dense(32, activation='relu'),
+        layers.Dense(16, activation='relu'),
         layers.Dense(1, activation='sigmoid')
     ])
 
@@ -32,12 +33,13 @@ def predict_probability(jsonData, modelFilePath):
     data = json.loads(jsonData)
     priorityId = data['PriorityId']
     informationSystemId = data['InformationSystemId']
+    taskTypeId = data['TaskTypeId']
     taskExecutorId = data['TaskExecutorId']
 
     model = tf.keras.models.load_model(modelFilePath)
     
     # Преобразование списка в тензор
-    inputs = tf.constant([[priorityId, informationSystemId, taskExecutorId]], dtype=tf.float32)
+    inputs = tf.constant([[priorityId, informationSystemId, taskTypeId, taskExecutorId]], dtype=tf.float32)
 
     prediction = model.predict(inputs)
     return float(prediction[0][0])

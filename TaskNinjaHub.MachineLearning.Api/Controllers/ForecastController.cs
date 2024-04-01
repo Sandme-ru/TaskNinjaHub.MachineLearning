@@ -22,7 +22,7 @@ public class ForecastController(TrainingCore trainingCore) : ControllerBase
     [HttpPost("PredictProbability")]
     public OperationResult<double> PredictProbability([FromBody] TaskInputData inputData)
     {
-        var probability = trainingCore.PredictProbability(inputData.PriorityId, inputData.InformationSystemId, inputData.TaskExecutorId, TrainedModelKeras);
+        var probability = trainingCore.PredictProbability(inputData.PriorityId, inputData.InformationSystemId, inputData.TaskExecutorId, inputData.TaskTypeId, TrainedModelKeras);
         return probability;
     }
 }
