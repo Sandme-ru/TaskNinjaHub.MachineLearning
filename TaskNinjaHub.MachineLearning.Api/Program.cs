@@ -1,4 +1,5 @@
 using Python.Runtime;
+using TaskNinjaHub.MachineLearning.Api.Subdomain;
 using TaskNinjaHub.MachineLearning.Application;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +11,12 @@ builder.Services.AddScoped<TrainingCore>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(o =>
+{
+#if RELEASE
+    o.DocumentFilter<SubdomainRouteAttribute>();
+#endif
+});
 
 var app = builder.Build();
 
