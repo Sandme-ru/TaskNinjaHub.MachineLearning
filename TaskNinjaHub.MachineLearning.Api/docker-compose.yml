@@ -9,11 +9,21 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "401:8080"
-      - "402:8081"
-      - "403:5000"
+      - "8090:8080"
+      - "8091:8081"
+      - "5000:5000"
     depends_on:
-      - nginx
+      - python_app
+
+  python_app:
+    container_name: taskninja_python_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "5000:5000"
 
   nginx:
     image: nginx:latest
@@ -24,3 +34,4 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - dotnet_app
+      - python_app
