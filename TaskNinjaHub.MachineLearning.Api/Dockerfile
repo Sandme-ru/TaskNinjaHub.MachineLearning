@@ -12,10 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Use an official .NET runtime as a parent image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER app
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -38,6 +36,9 @@ COPY --from=publish /app/publish .
 # Copy Python environment from the python-base stage
 COPY --from=python-base /app/python /app/python
 WORKDIR /app/python
+
+# Install Uvicorn and other dependencies for Python server
+RUN pip install uvicorn
 
 # Expose the port the Python app runs on
 EXPOSE 5000
