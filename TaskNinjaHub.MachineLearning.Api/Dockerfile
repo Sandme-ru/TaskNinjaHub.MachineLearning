@@ -7,8 +7,8 @@ WORKDIR /app/python
 # Copy the current directory contents into the container at /app/python
 COPY . /app/python
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Check if requirements.txt exists and install dependencies if it does
+RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
 
 # Use an official .NET runtime as a parent image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
