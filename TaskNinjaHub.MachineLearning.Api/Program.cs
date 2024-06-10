@@ -4,7 +4,7 @@ using TaskNinjaHub.MachineLearning.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Runtime.PythonDLL = @"C:\Users\Zaid.Mingaliev\AppData\Local\anaconda3\envs\myenv\python312.dll";
+Runtime.PythonDLL = "C:/Users/zzmin/anaconda3/envs/myenv/python312.dll";
 
 builder.Services.AddScoped<TrainingCore>();
 
